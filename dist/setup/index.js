@@ -6064,12 +6064,16 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const core = __importStar(__webpack_require__(470));
 const finder = __importStar(__webpack_require__(927));
 const finderPyPy = __importStar(__webpack_require__(847));
 const path = __importStar(__webpack_require__(622));
 const os = __importStar(__webpack_require__(87));
+const fs_1 = __importDefault(__webpack_require__(747));
 const cache_factory_1 = __webpack_require__(633);
 const utils_1 = __webpack_require__(163);
 function isPyPyVersion(versionSpec) {
@@ -6082,6 +6086,19 @@ function cacheDependencies(cache, pythonVersion) {
         yield cacheDistributor.restoreCache();
     });
 }
+function resolveVersionInput() {
+    let version = core.getInput('python-version');
+    const versionFileInput = core.getInput('python-version-file');
+    if (versionFileInput) {
+        const versionFilePath = path.join(process.env.GITHUB_WORKSPACE, versionFileInput);
+        if (!fs_1.default.existsSync(versionFilePath)) {
+            throw new Error(`The specified node version file at: ${versionFilePath} does not exist`);
+        }
+        version = fs_1.default.readFileSync(versionFilePath, 'utf8');
+        core.info(`Resolved ${versionFileInput} as ${version}`);
+    }
+    return version;
+}
 function run() {
     var _a;
     return __awaiter(this, void 0, void 0, function* () {
@@ -6093,7 +6110,7 @@ function run() {
             core.debug(`Python is expected to be installed into RUNNER_TOOL_CACHE==${process.env['RUNNER_TOOL_CACHE']}`);
         }
         try {
-            const version = core.getInput('python-version');
+            const version = resolveVersionInput();
             if (version) {
                 let pythonVersion;
                 const arch = core.getInput('architecture') || os.arch();
